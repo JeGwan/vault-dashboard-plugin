@@ -1,4 +1,5 @@
-import type { DashboardWidget, WidgetContext } from './base';
+import { requestUrl } from 'obsidian';
+import type { DashboardWidget } from './base';
 
 export class RandomPhotoWidget implements DashboardWidget {
   id = 'random-photo';
@@ -26,9 +27,11 @@ export class RandomPhotoWidget implements DashboardWidget {
     this.imgEl.onerror = () => { this.imgEl.src = `https://picsum.photos/600/300?random=${seed}`; };
     this.captionEl.textContent = '';
 
-    fetch(`https://picsum.photos/seed/${seed}/info`)
-      .then(r => r.json())
-      .then(info => { if (info.author) this.captionEl.textContent = `📷 ${info.author}`; })
+    void requestUrl(`https://picsum.photos/seed/${seed}/info`)
+      .then(res => {
+        const info = res.json;
+        if (info.author) this.captionEl.textContent = `📷 ${info.author}`;
+      })
       .catch(() => {});
   }
 

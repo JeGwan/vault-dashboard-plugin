@@ -15,19 +15,19 @@ export default class VaultDashboardPlugin extends Plugin {
       new DashboardView(leaf, this)
     );
 
-    this.addRibbonIcon('layout-dashboard', 'Open Dashboard', () => {
-      this.activateView();
+    this.addRibbonIcon('layout-dashboard', 'Open dashboard', () => {
+      void this.activateView();
     });
 
     this.addCommand({
       id: 'open-dashboard',
-      name: 'Open vault dashboard',
-      callback: () => this.activateView(),
+      name: 'Open dashboard',
+      callback: () => void this.activateView(),
     });
   }
 
-  async onunload(): Promise<void> {
-    this.app.workspace.detachLeavesOfType(VIEW_TYPE_DASHBOARD);
+  onunload(): void {
+    // Obsidian automatically detaches views on plugin unload
   }
 
   async loadSettings(): Promise<void> {

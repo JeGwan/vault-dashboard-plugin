@@ -1,4 +1,5 @@
-import type { DashboardWidget, WidgetContext } from './base';
+import { requestUrl } from 'obsidian';
+import type { DashboardWidget } from './base';
 import { QUOTES, type Quote } from '../data/quotes';
 
 const thumbCache: Record<string, string | null> = {};
@@ -23,9 +24,9 @@ async function fetchThumb(author: string): Promise<string | null> {
 
   try {
     const name = encodeURIComponent(author.replace(/ /g, '_'));
-    const res = await fetch(`https://en.wikipedia.org/api/rest_v1/page/summary/${name}`);
-    if (!res.ok) { thumbCache[author] = null; return null; }
-    const data = await res.json();
+    const res = await requestUrl(`https://en.wikipedia.org/api/rest_v1/page/summary/${name}`);
+    if (res.status !== 200) { thumbCache[author] = null; return null; }
+    const data = res.json;
     const url = data.thumbnail?.source || null;
     thumbCache[author] = url;
     return url;
@@ -50,7 +51,7 @@ export class DailyQuoteWidget implements DashboardWidget {
 
     this.currentIdx = todayIndex();
     this.showQuote(QUOTES[this.currentIdx], null);
-    fetchThumb(QUOTES[this.currentIdx].author).then(thumb => {
+    void fetchThumb(QUOTES[this.currentIdx].author).then(thumb => {
       if (thumb) this.showQuote(QUOTES[this.currentIdx], thumb);
     });
   }
@@ -78,12 +79,13 @@ export class DailyQuoteWidget implements DashboardWidget {
 
     const refreshBtn = this.metaEl.createEl('button', { cls: 'vd-quote-refresh', text: '↻' });
     refreshBtn.title = '다른 명언';
-    refreshBtn.addEventListener('click', async () => {
+    refreshBtn.addEventListener('click', () => {
       this.currentIdx = randomIndex(this.currentIdx);
       const nextQ = QUOTES[this.currentIdx];
       this.showQuote(nextQ, null);
-      const thumb = await fetchThumb(nextQ.author);
-      if (thumb) this.showQuote(nextQ, thumb);
+      void fetchThumb(nextQ.author).then(thumb => {
+        if (thumb) this.showQuote(nextQ, thumb);
+      });
     });
   }
 

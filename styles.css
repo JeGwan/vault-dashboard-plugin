@@ -328,7 +328,7 @@
 .vd-cal-empty { color: var(--vd-text-faint); font-size: 13px; padding: 8px 0; }
 
 /* Daily note preview */
-.vd-cal-preview { flex: 1; overflow-y: auto; max-height: 400px; margin-top: 4px; }
+.vd-cal-preview { flex: 1; overflow-y: auto; min-height: 0; scrollbar-width: thin; scrollbar-color: var(--vd-border) transparent; margin-top: 4px; }
 .vd-cal-note-header { margin-bottom: 8px; }
 .vd-cal-note-link {
   font-size: 13px; color: var(--vd-accent); cursor: pointer;
@@ -340,7 +340,7 @@
   padding: 8px 12px;
   background: var(--vd-bg-card-alt);
   border-radius: 8px;
-  max-height: 300px; overflow-y: auto;
+  flex: 1; overflow-y: auto; scrollbar-width: thin; scrollbar-color: var(--vd-border) transparent;
 }
 .vd-cal-note-body h1, .vd-cal-note-body h2, .vd-cal-note-body h3 { font-size: 14px; margin: 8px 0 4px; }
 .vd-cal-note-body p { margin: 4px 0; }
@@ -365,3 +365,130 @@
 .vd-widget-wrapper > .vd-card { box-sizing: border-box; }
 /* Clock in small mode */
 .vd-clock { overflow: hidden; }
+
+/* ═══════════════════════════════════════════
+   ADD BUTTON
+   ═══════════════════════════════════════════ */
+.vd-add-btn {
+  background: none; border: 1px solid var(--vd-border); border-radius: 8px;
+  padding: 4px 12px; font-size: 13px; color: var(--vd-text-muted);
+  cursor: pointer; transition: all 0.15s; margin-left: 6px;
+}
+.vd-add-btn:hover {
+  background: var(--vd-accent); color: white; border-color: var(--vd-accent);
+}
+
+/* ═══════════════════════════════════════════
+   NOTE WIDGET
+   ═══════════════════════════════════════════ */
+.vd-note-widget {
+  display: flex; flex-direction: column; overflow: hidden;
+}
+.vd-note-header {
+  display: flex; align-items: center; justify-content: space-between;
+  margin-bottom: 8px; flex-shrink: 0;
+}
+.vd-note-title {
+  font-size: 14px; font-weight: 600; color: var(--vd-text);
+  white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+}
+.vd-note-open-btn {
+  background: none; border: 1px solid var(--vd-border); border-radius: 6px;
+  width: 24px; height: 24px; cursor: pointer; color: var(--vd-text-muted);
+  display: flex; align-items: center; justify-content: center; font-size: 12px;
+  flex-shrink: 0; transition: all 0.15s;
+}
+.vd-note-open-btn:hover { color: var(--vd-accent); border-color: var(--vd-accent); }
+.vd-note-body {
+  flex: 1; overflow-y: auto; font-size: 13px; line-height: 1.6;
+  scrollbar-width: thin; scrollbar-color: var(--vd-border) transparent;
+}
+.vd-note-body h1, .vd-note-body h2, .vd-note-body h3 { font-size: 14px; margin: 8px 0 4px; }
+.vd-note-body p { margin: 4px 0; }
+.vd-note-body ul, .vd-note-body ol { padding-left: 20px; margin: 4px 0; }
+.vd-note-body li { margin: 2px 0; }
+.vd-note-empty { color: var(--vd-text-faint); font-size: 13px; padding: 8px 0; }
+
+/* ═══════════════════════════════════════════
+   WIDGET REMOVE BUTTON
+   ═══════════════════════════════════════════ */
+.vd-widget-remove {
+  position: absolute; top: 4px; right: 4px;
+  width: 22px; height: 22px;
+  display: none; align-items: center; justify-content: center;
+  font-size: 13px; color: var(--vd-text-faint);
+  cursor: pointer; border-radius: 50%;
+  background: var(--vd-bg-card-alt);
+  border: 1px solid var(--vd-border);
+  z-index: 10; transition: all 0.15s;
+}
+.vd-widget-remove:hover { color: #e8645a; border-color: #e8645a; }
+.vd-edit-mode .vd-widget-remove { display: flex; }
+
+/* ═══════════════════════════════════════════
+   WIDGET PICKER MODAL
+   ═══════════════════════════════════════════ */
+.vd-modal-title { margin: 0 0 16px; font-size: 18px; }
+.vd-widget-picker-grid {
+  display: grid; grid-template-columns: repeat(2, 1fr); gap: 8px;
+}
+.vd-widget-picker-item {
+  display: flex; align-items: center; gap: 10px;
+  padding: 12px; border-radius: 10px;
+  border: 1px solid var(--background-modifier-border, rgba(0,0,0,0.06));
+  cursor: pointer; transition: all 0.15s;
+}
+.vd-widget-picker-item:hover {
+  background: var(--background-secondary-alt, rgba(244,247,246,0.65));
+  border-color: var(--interactive-accent, #0d7377);
+}
+.vd-widget-picker-icon { font-size: 24px; flex-shrink: 0; }
+.vd-widget-picker-info { flex: 1; min-width: 0; }
+.vd-widget-picker-name { font-size: 14px; font-weight: 600; }
+.vd-widget-picker-desc { font-size: 12px; color: var(--text-muted, #5a6876); margin-top: 2px; }
+
+/* ═══════════════════════════════════════════
+   KANBAN BOARD (inside note widget)
+   ═══════════════════════════════════════════ */
+.vd-kanban-body { overflow-x: auto; overflow-y: hidden; }
+.vd-kb-board {
+  display: flex; gap: 10px; min-height: 100%;
+  padding-bottom: 8px;
+}
+.vd-kb-col {
+  min-width: 160px; max-width: 220px; flex-shrink: 0;
+  display: flex; flex-direction: column;
+}
+.vd-kb-col-header {
+  display: flex; align-items: center; gap: 6px;
+  padding: 4px 8px; margin-bottom: 6px;
+  font-size: 12px; font-weight: 700; color: var(--vd-text-muted);
+  text-transform: uppercase; letter-spacing: 0.3px;
+}
+.vd-kb-col-count {
+  font-size: 11px; font-weight: 500;
+  background: var(--vd-bg-card-alt); border-radius: 10px;
+  padding: 1px 7px; color: var(--vd-text-faint);
+}
+.vd-kb-col-header.vd-kb-wip-over .vd-kb-col-count {
+  background: #e8645a; color: white;
+}
+.vd-kb-cards { display: flex; flex-direction: column; gap: 4px; flex: 1; }
+.vd-kb-card {
+  padding: 6px 8px; border-radius: 6px;
+  background: var(--vd-bg-card-alt);
+  border: 1px solid var(--vd-border);
+  font-size: 12px;
+}
+.vd-kb-card-done { opacity: 0.45; text-decoration: line-through; }
+.vd-kb-card-title {
+  color: var(--vd-text); line-height: 1.4;
+  white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+}
+.vd-kb-card-due {
+  font-size: 10px; margin-top: 3px; font-weight: 600;
+  color: var(--vd-text-faint);
+}
+.vd-kb-card-due.vd-kb-overdue { color: #e8645a; }
+.vd-kb-card-due.vd-kb-today { color: #e8a33e; }
+.vd-kb-card-due.vd-kb-soon { color: #e8a33e; }

@@ -1,4 +1,4 @@
-import { MarkdownRenderer } from 'obsidian';
+import { Component, MarkdownRenderer, TFile } from 'obsidian';
 import type { DashboardWidget, WidgetContext } from './base';
 
 export class CalendarWidget implements DashboardWidget {
@@ -36,7 +36,7 @@ export class CalendarWidget implements DashboardWidget {
 
     this.calGrid = this.el.createDiv({ cls: 'vd-cal-grid' });
     this.calGrid.addEventListener('click', (e) => {
-      const cell = (e.target as HTMLElement).closest('.vd-day-cell:not(.other-month)') as HTMLElement | null;
+      const cell = (e.target as HTMLElement).closest<HTMLElement>('.vd-day-cell:not(.other-month)');
       if (!cell) return;
       const day = parseInt(cell.textContent || '');
       if (isNaN(day)) return;
@@ -45,7 +45,7 @@ export class CalendarWidget implements DashboardWidget {
       this.selectedDate = dateStr;
       this.calGrid.querySelectorAll('.vd-day-cell').forEach(c => c.classList.remove('selected'));
       cell.classList.add('selected');
-      this.showDailyNote(dateStr);
+      void this.showDailyNote(dateStr);
     });
 
     this.previewEl = this.el.createDiv({ cls: 'vd-cal-preview' });
@@ -53,7 +53,7 @@ export class CalendarWidget implements DashboardWidget {
     this.renderCalendar();
     const today = new Date().toISOString().slice(0, 10);
     this.selectedDate = today;
-    this.showDailyNote(today);
+    void this.showDailyNote(today);
   }
 
   private renderCalendar(): void {
@@ -115,7 +115,7 @@ export class CalendarWidget implements DashboardWidget {
       const file = vault.getAbstractFileByPath(path);
       if (file && 'extension' in file) {
         try {
-          content = await vault.cachedRead(file as any);
+          content = await vault.cachedRead(file as TFile);
           foundPath = path;
           break;
         } catch { /* continue */ }
@@ -137,7 +137,7 @@ export class CalendarWidget implements DashboardWidget {
       e.preventDefault();
       const file = vault.getAbstractFileByPath(foundPath!);
       if (file) {
-        this.ctx.app.workspace.openLinkText(foundPath!, '', false);
+        void this.ctx.app.workspace.openLinkText(foundPath!, '', false);
       }
     });
 
@@ -146,7 +146,7 @@ export class CalendarWidget implements DashboardWidget {
     // Strip frontmatter
     const stripped = content.replace(/^---[\s\S]*?---\n?/, '');
     // Limit to reasonable length
-    const truncated = stripped.length > 2000 ? stripped.slice(0, 2000) + '\n\n...' : stripped;
+    const truncated = stripped.length > 8000 ? stripped.slice(0, 8000) + '\n\n...' : stripped;
 
     try {
       await MarkdownRenderer.render(
@@ -154,7 +154,7 @@ export class CalendarWidget implements DashboardWidget {
         truncated,
         bodyEl,
         foundPath!,
-        null as any,
+        new Component(),
       );
     } catch {
       bodyEl.textContent = truncated;

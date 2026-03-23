@@ -1,4 +1,4 @@
-import type { DashboardWidget, WidgetContext } from './base';
+import type { DashboardWidget } from './base';
 
 const DAYS_KO = ['일', '월', '화', '수', '목', '금', '토'];
 
@@ -30,7 +30,9 @@ export class FlipClockWidget implements DashboardWidget {
         card.createDiv({ cls: 'fc-divider' });
       }
       if (group.sep) {
-        row.createDiv({ cls: 'fc-dots' }).innerHTML = '<span></span><span></span>';
+        const dots = row.createDiv({ cls: 'fc-dots' });
+        dots.createSpan();
+        dots.createSpan();
       }
     }
 
@@ -51,7 +53,7 @@ export class FlipClockWidget implements DashboardWidget {
 
     for (const [id, val] of digits) {
       if (this.prev[id] === val) continue;
-      const card = this.el.querySelector(`[data-id="${id}"]`) as HTMLElement | null;
+      const card = this.el.querySelector<HTMLElement>(`[data-id="${id}"]`);
       if (!card) continue;
 
       const upperSpan = card.querySelector('.fc-upper span') as HTMLElement;
@@ -65,29 +67,30 @@ export class FlipClockWidget implements DashboardWidget {
       // Top flap: shows OLD value, flips down to reveal new value underneath
       const flapTop = document.createElement('div');
       flapTop.className = 'fc-flap-top';
-      flapTop.innerHTML = `<span>${oldVal}</span>`;
+      flapTop.createSpan({ text: oldVal });
       card.appendChild(flapTop);
 
       // Bottom flap: shows NEW value, flips up from bottom
       const flapBottom = document.createElement('div');
       flapBottom.className = 'fc-flap-bottom';
-      flapBottom.innerHTML = `<span>${val}</span>`;
+      flapBottom.createSpan({ text: val });
       card.appendChild(flapBottom);
 
-      // Update static digits
+      // Upper: update immediately (hidden behind flap-top)
       upperSpan.textContent = val;
-      lowerSpan.textContent = val;
+      // Lower: keep old value, update when flap-bottom starts covering it
+      setTimeout(() => { if (lowerSpan) lowerSpan.textContent = val; }, 280);
 
       // Cleanup after animation
       setTimeout(() => {
         flapTop.remove();
         flapBottom.remove();
-      }, 600);
+      }, 650);
 
       this.prev[id] = val;
     }
 
-    const dateEl = this.el.querySelector('.fc-date') as HTMLElement | null;
+    const dateEl = this.el.querySelector<HTMLElement>('.fc-date');
     if (dateEl) {
       dateEl.textContent = `${now.getFullYear()}. ${now.getMonth() + 1}. ${now.getDate()}. ${DAYS_KO[now.getDay()]}요일`;
     }

@@ -10,6 +10,8 @@ import { RandomPhotoWidget } from './widgets/random-photo';
 import { ActivityHeatmapWidget } from './widgets/activity-heatmap';
 import { CalendarWidget } from './widgets/calendar';
 import { YouTubePlayerWidget } from './widgets/youtube-player';
+import { AddWidgetModal } from './widgets/add-widget-modal';
+import { NoteWidget } from './widgets/note';
 
 export const VIEW_TYPE_DASHBOARD = 'vault-dashboard';
 
@@ -56,13 +58,18 @@ export class DashboardView extends ItemView {
 
     // Edit mode toggle
     const toolbar = root.createDiv({ cls: 'vd-toolbar' });
-    const editBtn = toolbar.createEl('button', { cls: 'vd-edit-btn', text: '✎ Edit' });
+    const editBtn = toolbar.createEl('button', { cls: 'vd-edit-btn', text: '✎ edit' });
     editBtn.addEventListener('click', () => {
       this.editMode = !this.editMode;
       this.grid.classList.toggle('vd-edit-mode', this.editMode);
-      editBtn.textContent = this.editMode ? '✓ Done' : '✎ Edit';
+      editBtn.textContent = this.editMode ? '✓ done' : '✎ edit';
       editBtn.classList.toggle('active', this.editMode);
       if (!this.editMode) this.saveLayout();
+    });
+
+    const addBtn = toolbar.createEl('button', { cls: 'vd-add-btn', text: '+ Add' });
+    addBtn.addEventListener('click', () => {
+      new AddWidgetModal(this.app, this).open();
     });
 
     const cols = this.plugin.settings.gridCols || 4;
@@ -73,6 +80,30 @@ export class DashboardView extends ItemView {
     const layout = this.getLayout();
 
     for (const p of layout) {
+      // Note widgets
+      if (p.id.startsWith('note-')) {
+        const noteWidgets = this.plugin.settings.noteWidgets || [];
+        const nw = noteWidgets.find(n => n.id === p.id);
+        if (!nw) continue;
+        const widget = new NoteWidget(p.id, nw.path);
+        this.placementMap.set(p.id, { ...p });
+        this.widgets.push(widget);
+        const wrapper = this.grid.createDiv({ cls: 'vd-widget-wrapper' });
+        wrapper.dataset.widgetId = p.id;
+        this.applyGridPosition(wrapper, p);
+        widget.render(wrapper, ctx);
+        const removeBtn = wrapper.createDiv({ cls: 'vd-widget-remove', text: '\u2715' });
+        removeBtn.addEventListener('click', (e) => {
+          e.stopPropagation();
+          void this.removeNoteWidget(p.id);
+        });
+        const handle = wrapper.createDiv({ cls: 'vd-resize-handle' });
+        handle.textContent = '⇲';
+        this.enableResize(wrapper, handle, p);
+        this.enableDrag(wrapper, p);
+        continue;
+      }
+
       const settingKey = WIDGET_SETTING_KEY[p.id];
       if (settingKey && !this.plugin.settings.widgets[settingKey as keyof typeof this.plugin.settings.widgets]) continue;
       const factory = WIDGET_FACTORIES[p.id];
@@ -90,7 +121,7 @@ export class DashboardView extends ItemView {
 
       // Resize handle (visible in edit mode)
       const handle = wrapper.createDiv({ cls: 'vd-resize-handle' });
-      handle.innerHTML = '⇲';
+      handle.textContent = '⇲';
       this.enableResize(wrapper, handle, p);
       this.enableDrag(wrapper, p);
     }
@@ -111,7 +142,7 @@ export class DashboardView extends ItemView {
     const layout: WidgetPlacement[] = [];
     this.placementMap.forEach((p) => layout.push({ ...p }));
     this.plugin.settings.layout = layout;
-    this.plugin.saveSettings();
+    void this.plugin.saveSettings();
   }
 
   /** Drag to move widget on the grid */
@@ -232,6 +263,51 @@ export class DashboardView extends ItemView {
       document.addEventListener('pointermove', onMove);
       document.addEventListener('pointerup', onUp, { once: true });
     });
+  }
+
+  async addNoteWidget(notePath: string): Promise<void> {
+    const noteWidgets = this.plugin.settings.noteWidgets || [];
+    const widgetId = 'note-' + Date.now().toString(36);
+    noteWidgets.push({ id: widgetId, path: notePath });
+    this.plugin.settings.noteWidgets = noteWidgets;
+    const layout = this.getLayout();
+    const maxRow = layout.reduce((m, p) => Math.max(m, p.row + p.rowSpan), 0);
+    layout.push({ id: widgetId, col: 0, row: maxRow, colSpan: 2, rowSpan: 2 });
+    this.plugin.settings.layout = layout;
+    await this.plugin.saveSettings();
+    await this.onClose();
+    await this.onOpen();
+  }
+
+  async addBuiltinWidget(widgetType: string): Promise<void> {
+    const layout = this.getLayout();
+    if (layout.find(p => p.id === widgetType)) {
+      const settingKey = WIDGET_SETTING_KEY[widgetType];
+      if (settingKey) {
+        this.plugin.settings.widgets[settingKey as keyof typeof this.plugin.settings.widgets] = true;
+        await this.plugin.saveSettings();
+        await this.onClose();
+        await this.onOpen();
+      }
+      return;
+    }
+    const maxRow = layout.reduce((m, p) => Math.max(m, p.row + p.rowSpan), 0);
+    const minSize = WIDGET_MIN_SIZE[widgetType] || { minCol: 1, minRow: 1 };
+    layout.push({ id: widgetType, col: 0, row: maxRow, colSpan: Math.max(minSize.minCol, 2), rowSpan: Math.max(minSize.minRow, 1) });
+    this.plugin.settings.layout = layout;
+    const settingKey = WIDGET_SETTING_KEY[widgetType];
+    if (settingKey) this.plugin.settings.widgets[settingKey as keyof typeof this.plugin.settings.widgets] = true;
+    await this.plugin.saveSettings();
+    await this.onClose();
+    await this.onOpen();
+  }
+
+  async removeNoteWidget(widgetId: string): Promise<void> {
+    this.plugin.settings.noteWidgets = (this.plugin.settings.noteWidgets || []).filter(n => n.id !== widgetId);
+    this.plugin.settings.layout = (this.plugin.settings.layout || []).filter(p => p.id !== widgetId);
+    await this.plugin.saveSettings();
+    await this.onClose();
+    await this.onOpen();
   }
 
   async onClose(): Promise<void> {

@@ -13,10 +13,10 @@ export class VaultDashboardSettingTab extends PluginSettingTab {
     const { containerEl } = this;
     containerEl.empty();
 
-    containerEl.createEl('h2', { text: 'Vault Dashboard' });
+    new Setting(containerEl).setName('Vault dashboard').setHeading();
 
     // ── Widget visibility ──
-    containerEl.createEl('h3', { text: 'Widgets' });
+    new Setting(containerEl).setName('Widgets').setHeading();
 
     const widgetNames: Record<string, string> = {
       flipClock: 'Flip Clock',
@@ -40,7 +40,7 @@ export class VaultDashboardSettingTab extends PluginSettingTab {
     }
 
     // ── Weather cities ──
-    containerEl.createEl('h3', { text: 'Weather Cities' });
+    new Setting(containerEl).setName('Weather cities').setHeading();
 
     const citiesContainer = containerEl.createDiv('vd-cities-list');
     this.renderCities(citiesContainer);
@@ -51,14 +51,14 @@ export class VaultDashboardSettingTab extends PluginSettingTab {
         .onClick(() => {
           this.plugin.settings.cities.push('');
           this.renderCities(citiesContainer);
-          this.plugin.saveSettings();
+          void this.plugin.saveSettings();
         }));
 
     // ── YouTube ──
-    containerEl.createEl('h3', { text: 'YouTube' });
+    new Setting(containerEl).setName('YouTube').setHeading();
 
     new Setting(containerEl)
-      .setName('Video or Playlist ID')
+      .setName('Video or playlist ID')
       .setDesc('YouTube video ID, playlist ID, or full URL')
       .addText(text => text
         .setPlaceholder('jfKfPfyJRdk')
@@ -76,15 +76,15 @@ export class VaultDashboardSettingTab extends PluginSettingTab {
       const row = container.createDiv({ cls: 'vd-city-row' });
       const input = row.createEl('input', { type: 'text', value: city, cls: 'vd-city-input' });
       input.placeholder = 'City name';
-      input.addEventListener('change', async () => {
+      input.addEventListener('change', () => {
         cities[i] = input.value;
-        await this.plugin.saveSettings();
+        void this.plugin.saveSettings();
       });
       const removeBtn = row.createEl('button', { text: '×', cls: 'vd-city-remove' });
-      removeBtn.addEventListener('click', async () => {
+      removeBtn.addEventListener('click', () => {
         cities.splice(i, 1);
         this.renderCities(container);
-        await this.plugin.saveSettings();
+        void this.plugin.saveSettings();
       });
     });
   }

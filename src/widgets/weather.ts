@@ -1,3 +1,4 @@
+import { requestUrl } from 'obsidian';
 import type { DashboardWidget, WidgetContext } from './base';
 import { CITY_PRESETS } from '../data/city-presets';
 import { WMO } from '../data/weather-codes';
@@ -28,7 +29,7 @@ export class WeatherWidget implements DashboardWidget {
     this.buildTabs(ctx);
   }
 
-  async refresh(ctx: WidgetContext): Promise<void> {
+  refresh(ctx: WidgetContext): void {
     this.buildTabs(ctx);
   }
 
@@ -39,9 +40,9 @@ export class WeatherWidget implements DashboardWidget {
       const btn = this.tabsEl.createEl('button', { cls: 'vd-weather-tab', text: city });
       if (i === 0) btn.addClass('active');
       btn.dataset.city = city;
-      btn.addEventListener('click', () => this.showCity(city));
+      btn.addEventListener('click', () => void this.showCity(city));
     });
-    if (cities.length > 0) this.showCity(cities[0]);
+    if (cities.length > 0) void this.showCity(cities[0]);
   }
 
   private async showCity(city: string): Promise<void> {
@@ -77,8 +78,8 @@ export class WeatherWidget implements DashboardWidget {
     if (!coords) return null;
 
     const url = `https://api.open-meteo.com/v1/forecast?latitude=${coords.lat}&longitude=${coords.lon}&current=temperature_2m,relative_humidity_2m,weather_code,wind_speed_10m&timezone=auto`;
-    const res = await fetch(url);
-    const data = await res.json();
+    const res = await requestUrl(url);
+    const data = res.json as WeatherData;
     cache[city] = { data, ts: Date.now() };
     return data;
   }

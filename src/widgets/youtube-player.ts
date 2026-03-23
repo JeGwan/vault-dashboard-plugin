@@ -1,8 +1,33 @@
 import type { DashboardWidget, WidgetContext } from './base';
 
+interface YTPlayerState {
+  PLAYING: number;
+}
+
+interface YTPlayer {
+  setVolume(vol: number): void;
+  getVolume(): number;
+  isMuted(): boolean;
+  mute(): void;
+  unMute(): void;
+  playVideo(): void;
+  pauseVideo(): void;
+  seekTo(seconds: number, allowSeekAhead: boolean): void;
+  getCurrentTime(): number;
+  getDuration(): number;
+  getPlayerState(): number;
+  getVideoData(): { title?: string; author?: string; video_id?: string };
+  destroy(): void;
+}
+
+interface YTAPI {
+  Player: new (el: HTMLElement, opts: Record<string, unknown>) => YTPlayer;
+  PlayerState: YTPlayerState;
+}
+
 declare global {
   interface Window {
-    YT: any;
+    YT: YTAPI | undefined;
     onYouTubeIframeAPIReady: (() => void) | undefined;
   }
 }
@@ -27,7 +52,7 @@ export class YouTubePlayerWidget implements DashboardWidget {
   id = 'youtube-player';
   name = 'YouTube Player';
   private el!: HTMLElement;
-  private player: any = null;
+  private player: YTPlayer | null = null;
   private progressTimer: number | null = null;
   private fillEl!: HTMLElement;
   private curEl!: HTMLElement;
@@ -122,9 +147,10 @@ export class YouTubePlayerWidget implements DashboardWidget {
     container.empty();
     const div = container.createDiv();
 
-    const playerVars: Record<string, any> = { autoplay: 0, controls: 0, disablekb: 1, fs: 0, modestbranding: 1 };
+    const playerVars: Record<string, string | number> = { autoplay: 0, controls: 0, disablekb: 1, fs: 0, modestbranding: 1 };
     if (listId) { playerVars.listType = 'playlist'; playerVars.list = listId; }
 
+    if (!window.YT?.Player) return;
     this.player = new window.YT.Player(div, {
       width: '1', height: '1',
       videoId: videoId || undefined,
@@ -134,9 +160,9 @@ export class YouTubePlayerWidget implements DashboardWidget {
           this.player?.setVolume(50);
           this.updateInfo();
         },
-        onStateChange: (e: any) => {
+        onStateChange: (e: { data: number }) => {
           this.updatePlayBtn();
-          if (e.data === window.YT.PlayerState.PLAYING) {
+          if (e.data === window.YT?.PlayerState?.PLAYING) {
             this.updateInfo();
             this.startProgress();
           } else {

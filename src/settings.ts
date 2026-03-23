@@ -20,6 +20,7 @@ export interface VaultDashboardSettings {
   };
   layout: WidgetPlacement[];
   gridCols: number; // default 4
+  noteWidgets: { id: string; path: string }[];
 }
 
 export const DEFAULT_LAYOUT: WidgetPlacement[] = [
@@ -40,6 +41,7 @@ export const WIDGET_MIN_SIZE: Record<string, { minCol: number; minRow: number }>
   'youtube-player':   { minCol: 2, minRow: 1 },
   'calendar':         { minCol: 1, minRow: 1 },
   'activity-heatmap': { minCol: 2, minRow: 1 },
+  'note':             { minCol: 1, minRow: 1 },
 };
 
 export const DEFAULT_SETTINGS: VaultDashboardSettings = {
@@ -56,4 +58,5 @@ export const DEFAULT_SETTINGS: VaultDashboardSettings = {
   },
   layout: DEFAULT_LAYOUT,
   gridCols: 4,
+  noteWidgets: [],
 };

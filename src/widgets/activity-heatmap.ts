@@ -1,5 +1,4 @@
 import type { DashboardWidget, WidgetContext } from './base';
-import type { TFile } from 'obsidian';
 
 export class ActivityHeatmapWidget implements DashboardWidget {
   id = 'activity-heatmap';
@@ -12,7 +11,7 @@ export class ActivityHeatmapWidget implements DashboardWidget {
     this.buildHeatmap(ctx);
   }
 
-  async refresh(ctx: WidgetContext): Promise<void> {
+  refresh(ctx: WidgetContext): void {
     this.el.empty();
     this.el.createDiv({ cls: 'vd-heatmap-title', text: 'Activity' });
     this.buildHeatmap(ctx);
@@ -52,7 +51,7 @@ export class ActivityHeatmapWidget implements DashboardWidget {
     const months: { col: number; label: string }[] = [];
     let lastMonth = -1;
     for (let w = 0; w < weeks.length; w++) {
-      const firstCell = weeks[w].find(c => c !== null) as CellData | undefined;
+      const firstCell = weeks[w].find((c): c is CellData => c !== null);
       if (firstCell) {
         const m = new Date(firstCell.key).getMonth();
         if (m !== lastMonth) {
@@ -100,8 +99,6 @@ export class ActivityHeatmapWidget implements DashboardWidget {
     for (let l = 0; l <= 4; l++) {
       const c = legend.createDiv({ cls: 'vd-heatmap-cell' });
       c.dataset.level = String(l);
-      c.style.width = '11px';
-      c.style.height = '11px';
     }
     legend.createSpan({ text: ' More' });
   }
