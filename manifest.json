@@ -1,0 +1,10 @@
+{
+  "id": "vault-dashboard",
+  "name": "Vault Dashboard",
+  "version": "1.0.0",
+  "minAppVersion": "1.5.0",
+  "description": "Personal dashboard with flip clock, weather, quotes, photos, calendar, activity heatmap, and music player.",
+  "author": "JeGwan Oh",
+  "authorUrl": "https://github.com/JeGwan",
+  "isDesktopOnly": true
+}
