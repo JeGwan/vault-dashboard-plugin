@@ -3,7 +3,7 @@
   "name": "Vault Dashboard",
   "version": "1.0.0",
   "minAppVersion": "1.5.0",
-  "description": "Personal dashboard with flip clock, weather, quotes, photos, calendar, activity heatmap, and music player.",
+  "description": "Personal dashboard with iOS-style widget grid — flip clock, weather, quotes, photos, YouTube player, calendar, and activity heatmap.",
   "author": "JeGwan Oh",
   "authorUrl": "https://github.com/JeGwan",
   "isDesktopOnly": true
