@@ -12,6 +12,7 @@ import { CalendarWidget } from './widgets/calendar';
 import { YouTubePlayerWidget } from './widgets/youtube-player';
 import { AddWidgetModal } from './widgets/add-widget-modal';
 import { NoteWidget } from './widgets/note';
+import { PomodoroWidget } from './widgets/pomodoro';
 
 export const VIEW_TYPE_DASHBOARD = 'vault-dashboard';
 
@@ -23,6 +24,7 @@ const WIDGET_FACTORIES: Record<string, () => DashboardWidget> = {
   'youtube-player': () => new YouTubePlayerWidget(),
   'calendar': () => new CalendarWidget(),
   'activity-heatmap': () => new ActivityHeatmapWidget(),
+  'pomodoro': () => new PomodoroWidget(),
 };
 
 const WIDGET_SETTING_KEY: Record<string, string> = {
@@ -33,6 +35,7 @@ const WIDGET_SETTING_KEY: Record<string, string> = {
   'youtube-player': 'youtube',
   'calendar': 'calendar',
   'activity-heatmap': 'heatmap',
+  'pomodoro': 'pomodoro',
 };
 
 export class DashboardView extends ItemView {
@@ -51,18 +54,18 @@ export class DashboardView extends ItemView {
   getDisplayText(): string { return 'Dashboard'; }
   getIcon(): string { return 'layout-dashboard'; }
 
-  async onOpen(): Promise<void> {
+  onOpen(): Promise<void> {
     const root = this.contentEl;
     root.empty();
     root.addClass('vault-dashboard-view');
 
     // Edit mode toggle
     const toolbar = root.createDiv({ cls: 'vd-toolbar' });
-    const editBtn = toolbar.createEl('button', { cls: 'vd-edit-btn', text: '✎ edit' });
+    const editBtn = toolbar.createEl('button', { cls: 'vd-edit-btn', text: '✎ Edit' });
     editBtn.addEventListener('click', () => {
       this.editMode = !this.editMode;
       this.grid.classList.toggle('vd-edit-mode', this.editMode);
-      editBtn.textContent = this.editMode ? '✓ done' : '✎ edit';
+      editBtn.textContent = this.editMode ? '✓ Done' : '✎ Edit';
       editBtn.classList.toggle('active', this.editMode);
       if (!this.editMode) this.saveLayout();
     });
@@ -86,11 +89,12 @@ export class DashboardView extends ItemView {
         const nw = noteWidgets.find(n => n.id === p.id);
         if (!nw) continue;
         const widget = new NoteWidget(p.id, nw.path);
-        this.placementMap.set(p.id, { ...p });
+        const placement = { ...p };
+        this.placementMap.set(p.id, placement);
         this.widgets.push(widget);
         const wrapper = this.grid.createDiv({ cls: 'vd-widget-wrapper' });
         wrapper.dataset.widgetId = p.id;
-        this.applyGridPosition(wrapper, p);
+        this.applyGridPosition(wrapper, placement);
         widget.render(wrapper, ctx);
         const removeBtn = wrapper.createDiv({ cls: 'vd-widget-remove', text: '\u2715' });
         removeBtn.addEventListener('click', (e) => {
@@ -99,8 +103,8 @@ export class DashboardView extends ItemView {
         });
         const handle = wrapper.createDiv({ cls: 'vd-resize-handle' });
         handle.textContent = '⇲';
-        this.enableResize(wrapper, handle, p);
-        this.enableDrag(wrapper, p);
+        this.enableResize(wrapper, handle, placement);
+        this.enableDrag(wrapper, placement);
         continue;
       }
 
@@ -109,22 +113,24 @@ export class DashboardView extends ItemView {
       const factory = WIDGET_FACTORIES[p.id];
       if (!factory) continue;
 
-      this.placementMap.set(p.id, { ...p });
+      const placement = { ...p };
+      this.placementMap.set(p.id, placement);
       const widget = factory();
       this.widgets.push(widget);
 
       const wrapper = this.grid.createDiv({ cls: 'vd-widget-wrapper' });
       wrapper.dataset.widgetId = p.id;
-      this.applyGridPosition(wrapper, p);
+      this.applyGridPosition(wrapper, placement);
 
       widget.render(wrapper, ctx);
 
       // Resize handle (visible in edit mode)
       const handle = wrapper.createDiv({ cls: 'vd-resize-handle' });
       handle.textContent = '⇲';
-      this.enableResize(wrapper, handle, p);
-      this.enableDrag(wrapper, p);
+      this.enableResize(wrapper, handle, placement);
+      this.enableDrag(wrapper, placement);
     }
+    return Promise.resolve();
   }
 
   private getLayout(): WidgetPlacement[] {
@@ -310,8 +316,9 @@ export class DashboardView extends ItemView {
     await this.onOpen();
   }
 
-  async onClose(): Promise<void> {
+  onClose(): Promise<void> {
     for (const w of this.widgets) w.destroy?.();
     this.widgets = [];
+    return Promise.resolve();
   }
 }

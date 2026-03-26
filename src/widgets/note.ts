@@ -77,6 +77,7 @@ export class NoteWidget implements DashboardWidget {
   name: string;
   notePath: string;
   el!: HTMLElement;
+  private _mdComp: Component | null = null;
   ctx!: WidgetContext;
 
   constructor(id: string, notePath: string) {
@@ -105,25 +106,26 @@ export class NoteWidget implements DashboardWidget {
     openBtn.addEventListener('click', (e) => {
       e.stopPropagation();
       const file = this.ctx.app.vault.getAbstractFileByPath(this.notePath);
-      if (file) void this.ctx.app.workspace.getLeaf('tab').openFile(file as TFile);
+      if (file instanceof TFile) void this.ctx.app.workspace.getLeaf('tab').openFile(file);
     });
     const body = this.el.createDiv({ cls: 'vd-note-body' });
     try {
       const file = this.ctx.app.vault.getAbstractFileByPath(this.notePath);
-      if (!file) {
+      if (!(file instanceof TFile)) {
         body.createDiv({ cls: 'vd-note-empty', text: 'File not found: ' + this.notePath });
         return;
       }
-      const content = await this.ctx.app.vault.cachedRead(file as TFile);
+      const content = await this.ctx.app.vault.cachedRead(file);
       const kanbanCols = parseKanbanBoard(content);
       if (kanbanCols) {
         this.renderKanban(body, kanbanCols);
       } else {
         const md = content.replace(/^---\n[\s\S]*?\n---\n?/, '');
-        const comp = new Component();
-        comp.load();
+        this._mdComp?.unload();
+        this._mdComp = new Component();
+        this._mdComp.load();
         body.empty();
-        await MarkdownRenderer.render(this.ctx.app, md, body, this.notePath, comp);
+        await MarkdownRenderer.render(this.ctx.app, md, body, this.notePath, this._mdComp);
       }
     } catch (err) {
       body.createDiv({ cls: 'vd-note-empty', text: 'Load failed: ' + (err as Error).message });
@@ -170,5 +172,8 @@ export class NoteWidget implements DashboardWidget {
     if (this.notePath) await this.loadNote();
   }
 
-  destroy(): void { /* noop */ }
+  destroy(): void {
+    this._mdComp?.unload();
+    this._mdComp = null;
+  }
 }

@@ -33,7 +33,13 @@ export default class VaultDashboardPlugin extends Plugin {
   async loadSettings(): Promise<void> {
     const saved = await this.loadData();
     this.settings = Object.assign({}, DEFAULT_SETTINGS, saved);
-    this.settings.widgets = Object.assign({}, DEFAULT_SETTINGS.widgets, this.settings.widgets);
+    this.settings.widgets = Object.assign({}, DEFAULT_SETTINGS.widgets, saved?.widgets);
+    this.settings.pomodoro = Object.assign({}, DEFAULT_SETTINGS.pomodoro, saved?.pomodoro);
+    // Migrate legacy single youtubeId to playlist
+    if (!this.settings.youtubePlaylist || this.settings.youtubePlaylist.length === 0) {
+      const legacyId = this.settings.youtubeId || DEFAULT_SETTINGS.youtubeId;
+      this.settings.youtubePlaylist = [{ name: 'Default', id: legacyId }];
+    }
     // Migrate old row-based layout to grid-based
     if (this.settings.layout?.length > 0 && !('colSpan' in this.settings.layout[0])) {
       this.settings.layout = DEFAULT_SETTINGS.layout;
@@ -48,12 +54,12 @@ export default class VaultDashboardPlugin extends Plugin {
   async activateView(): Promise<void> {
     const existing = this.app.workspace.getLeavesOfType(VIEW_TYPE_DASHBOARD);
     if (existing.length > 0) {
-      this.app.workspace.revealLeaf(existing[0]);
+      void this.app.workspace.revealLeaf(existing[0]);
       return;
     }
 
     const leaf = this.app.workspace.getLeaf('tab');
     await leaf.setViewState({ type: VIEW_TYPE_DASHBOARD, active: true });
-    this.app.workspace.revealLeaf(leaf);
+    void this.app.workspace.revealLeaf(leaf);
   }
 }
